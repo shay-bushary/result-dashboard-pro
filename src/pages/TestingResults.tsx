@@ -1,156 +1,228 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Info, LineChart } from "lucide-react";
 import { AddTestModal } from "@/components/AddTestModal";
-import { TestCard } from "@/components/TestCard";
+import { TestResultsChart } from "@/components/TestResultsChart";
 
-interface Test {
+interface TestResult {
   id: string;
   name: string;
-  type: "rangeOfMotion" | "endurance" | "strength" | "power";
+  unit: string;
+  expected: number;
+  left: number | null;
+  right: number | null;
+  noLaterality: number | null;
 }
 
+// Mock test dates for the patient
+const mockTestDates = [
+  "2025-01-15",
+  "2025-02-10",
+  "2025-03-05",
+];
+
+// Mock test results
+const mockTestResults: TestResult[] = [
+  {
+    id: "1",
+    name: "Weight bearing lunge test (Ankle)",
+    unit: "Degrees",
+    expected: 41.0,
+    left: 5.0,
+    right: 3.0,
+    noLaterality: null,
+  },
+  {
+    id: "2",
+    name: "Single leg calf raise (Ankle)",
+    unit: "Repetitions",
+    expected: 30.0,
+    left: 10,
+    right: 10,
+    noLaterality: null,
+  },
+];
+
 const TestingResults = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [tests, setTests] = useState<Test[]>([]);
-  const [selectedBodyPart, setSelectedBodyPart] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showPercentage, setShowPercentage] = useState(false);
 
-  const handleAddTests = (data: { date: Date; bodyPart: string; tests: string[] }) => {
-    const testTypeMap: Record<string, "rangeOfMotion" | "endurance" | "strength" | "power"> = {
-      "Cervical Flexion": "rangeOfMotion",
-      "Cervical Extension": "rangeOfMotion",
-      "Cervical Rotation": "rangeOfMotion",
-      "Cervical Lateral Flexion": "rangeOfMotion",
-      "Deep Neck Flexor Endurance Test": "endurance",
-      "Plank Hold": "endurance",
-      "Side Plank Hold": "endurance",
-      "Cervical Flexion Strength": "strength",
-      "Cervical Extension Strength": "strength",
-      "Grip Strength": "strength",
-      "Vertical Jump": "power",
-      "Broad Jump": "power",
-      "Medicine Ball Throw": "power",
-    };
-
-    const newTests = data.tests.map((testName) => ({
-      id: `${Date.now()}-${Math.random()}`,
-      name: testName,
-      type: testTypeMap[testName] || "rangeOfMotion",
-    }));
-
-    setTests([...tests, ...newTests]);
-    setSelectedDate(data.date);
-    setSelectedBodyPart(data.bodyPart);
+  const handleOpenModal = (editMode: boolean) => {
+    setIsEditMode(editMode);
+    setIsModalOpen(true);
   };
 
-  const handleRemoveTest = (id: string) => {
-    setTests(tests.filter((test) => test.id !== id));
+  const handleModalSubmit = (data: { date: Date; bodyPart: string; tests: string[] }) => {
+    console.log("Test data submitted:", data);
+    setIsModalOpen(false);
+  };
+
+  const getExpectedColor = (actual: number, expected: number) => {
+    const percentage = (actual / expected) * 100;
+    if (percentage >= 100) return "text-green-600";
+    if (percentage >= 75) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const formatValue = (actual: number | null, expected: number) => {
+    if (actual === null) return "-";
+    if (showPercentage) {
+      const percentage = (actual / expected) * 100;
+      return `${percentage.toFixed(1)}%`;
+    }
+    return actual.toFixed(1);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <h1 className="text-3xl font-bold text-foreground mb-8">Testing & Results</h1>
         
         {/* Top Controls */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2 text-foreground">Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "MM/dd/yyyy") : "Select date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+        <div className="flex gap-4 mb-8">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-2 text-foreground">Test Date</label>
+            <Select value={selectedDate} onValueChange={setSelectedDate}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {mockTestDates.map((date) => (
+                  <SelectItem key={date} value={date}>
+                    {new Date(date).toLocaleDateString()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2 text-foreground">Body Part</label>
+          <div className="flex-1 flex items-end">
             <Button
               variant="default"
               className="w-full"
-              disabled={!selectedBodyPart}
+              onClick={() => handleOpenModal(false)}
             >
-              <Plus className="mr-2 h-4 w-4" />
-              {selectedBodyPart || "Select body part"}
-            </Button>
-          </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2 text-foreground">Add Tests</label>
-            <Button
-              variant="default"
-              className="w-full"
-              onClick={() => setIsAddModalOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Tests
+              Create New Test
             </Button>
           </div>
         </div>
 
-        {/* Test Cards */}
-        {tests.length > 0 && (
-          <div className="space-y-4 mb-8">
-            {tests.map((test) => (
-              <TestCard
-                key={test.id}
-                testName={test.name}
-                testType={test.type}
-                onRemove={() => handleRemoveTest(test.id)}
-              />
-            ))}
-          </div>
-        )}
+        {/* Results Section */}
+        {selectedDate && (
+          <>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Result</h2>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="space-y-1">
+                        <p className="text-red-600">• 0-75%: Below expected</p>
+                        <p className="text-yellow-600">• 75-99%: Near expected</p>
+                        <p className="text-green-600">• 100%+: At or above expected</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => handleOpenModal(true)}
+                >
+                  Edit Current Test
+                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-foreground">Absolute/Percentage Values</span>
+                  <Switch
+                    checked={showPercentage}
+                    onCheckedChange={setShowPercentage}
+                  />
+                </div>
+              </div>
+            </div>
 
-        {/* Save Button */}
-        {tests.length > 0 && (
-          <div className="flex justify-end">
-            <Button size="lg" className="min-w-[150px]">
-              Save Tests
-            </Button>
-          </div>
+            {/* Results Table */}
+            <div className="mb-8 border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader className="bg-primary">
+                  <TableRow className="hover:bg-primary">
+                    <TableHead className="text-primary-foreground font-semibold">Test</TableHead>
+                    <TableHead className="text-primary-foreground font-semibold">Unit</TableHead>
+                    <TableHead className="text-primary-foreground font-semibold">
+                      <div className="flex items-center gap-2">
+                        Expected
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-3 w-3" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Target value for this test</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-primary-foreground font-semibold">Left</TableHead>
+                    <TableHead className="text-primary-foreground font-semibold">Right</TableHead>
+                    <TableHead className="text-primary-foreground font-semibold">No Laterality</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockTestResults.map((result) => (
+                    <TableRow key={result.id}>
+                      <TableCell className="font-medium">{result.name}</TableCell>
+                      <TableCell>{result.unit}</TableCell>
+                      <TableCell>{result.expected.toFixed(1)}</TableCell>
+                      <TableCell className={result.left ? getExpectedColor(result.left, result.expected) : ""}>
+                        {formatValue(result.left, result.expected)}
+                      </TableCell>
+                      <TableCell className={result.right ? getExpectedColor(result.right, result.expected) : ""}>
+                        {formatValue(result.right, result.expected)}
+                      </TableCell>
+                      <TableCell className={result.noLaterality ? getExpectedColor(result.noLaterality, result.expected) : ""}>
+                        {formatValue(result.noLaterality, result.expected)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Chart Section */}
+            <TestResultsChart results={mockTestResults} />
+          </>
         )}
 
         {/* Empty State */}
-        {tests.length === 0 && (
+        {!selectedDate && (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg mb-4">
-              No tests added yet
+              Select a test date to view results
             </p>
             <p className="text-muted-foreground mb-6">
-              Click "Add Tests" to get started
+              Or create a new test to get started
             </p>
           </div>
         )}
       </div>
 
       <AddTestModal
-        open={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
-        onSubmit={handleAddTests}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSubmit={handleModalSubmit}
+        isEditMode={isEditMode}
       />
     </div>
   );

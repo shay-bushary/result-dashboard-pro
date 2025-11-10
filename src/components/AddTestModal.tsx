@@ -15,6 +15,7 @@ interface AddTestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { date: Date; bodyPart: string; tests: string[] }) => void;
+  isEditMode?: boolean;
 }
 
 const bodyParts = [
@@ -53,7 +54,7 @@ const testsByCategory = {
   ],
 };
 
-export const AddTestModal = ({ open, onOpenChange, onSubmit }: AddTestModalProps) => {
+export const AddTestModal = ({ open, onOpenChange, onSubmit, isEditMode = false }: AddTestModalProps) => {
   const [date, setDate] = useState<Date>();
   const [bodyPart, setBodyPart] = useState<string>("");
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
@@ -100,9 +101,9 @@ export const AddTestModal = ({ open, onOpenChange, onSubmit }: AddTestModalProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Test</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Test" : "Add New Test"}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
@@ -204,7 +205,7 @@ export const AddTestModal = ({ open, onOpenChange, onSubmit }: AddTestModalProps
             disabled={!date || !bodyPart || selectedTests.size === 0}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Tests
+            {isEditMode ? "Update Tests" : "Add Tests"}
           </Button>
         </DialogFooter>
       </DialogContent>
