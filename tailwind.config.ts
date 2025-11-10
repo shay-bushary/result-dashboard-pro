@@ -22,14 +22,52 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
+          light: "hsl(var(--primary-light))",
+          dark: "hsl(var(--primary-dark))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          hover: "hsl(var(--secondary-hover))",
+          light: "hsl(var(--secondary-light))",
+          dark: "hsl(var(--secondary-dark))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          light: "hsl(var(--success-light))",
+          dark: "hsl(var(--success-dark))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          light: "hsl(var(--warning-light))",
+          dark: "hsl(var(--warning-dark))",
+        },
+        danger: {
+          DEFAULT: "hsl(var(--danger))",
+          light: "hsl(var(--danger-light))",
+          dark: "hsl(var(--danger-dark))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          light: "hsl(var(--info-light))",
+          dark: "hsl(var(--info-dark))",
+        },
+        gray: {
+          50: "hsl(var(--gray-50))",
+          100: "hsl(var(--gray-100))",
+          200: "hsl(var(--gray-200))",
+          300: "hsl(var(--gray-300))",
+          400: "hsl(var(--gray-400))",
+          500: "hsl(var(--gray-500))",
+          600: "hsl(var(--gray-600))",
+          700: "hsl(var(--gray-700))",
+          800: "hsl(var(--gray-800))",
+          900: "hsl(var(--gray-900))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
