@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Info, LineChart } from "lucide-react";
 import { AddTestModal } from "@/components/AddTestModal";
 import { TestResultsChart } from "@/components/TestResultsChart";
+import { VideoModal } from "@/components/VideoModal";
 
 interface TestResult {
   id: string;
@@ -16,6 +17,7 @@ interface TestResult {
   left: number | null;
   right: number | null;
   noLaterality: number | null;
+  videoUrl: string;
 }
 
 // Mock test dates for the patient
@@ -35,6 +37,7 @@ const mockTestResults: TestResult[] = [
     left: 5.0,
     right: 3.0,
     noLaterality: null,
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   },
   {
     id: "2",
@@ -44,6 +47,7 @@ const mockTestResults: TestResult[] = [
     left: 10,
     right: 10,
     noLaterality: null,
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   },
 ];
 
@@ -52,6 +56,13 @@ const TestingResults = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPercentage, setShowPercentage] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<TestResult | null>(null);
+
+  const handleTestClick = (test: TestResult) => {
+    setSelectedTest(test);
+    setVideoModalOpen(true);
+  };
 
   const handleOpenModal = (editMode: boolean) => {
     setIsEditMode(editMode);
@@ -182,7 +193,12 @@ const TestingResults = () => {
                 <TableBody>
                   {mockTestResults.map((result) => (
                     <TableRow key={result.id}>
-                      <TableCell className="font-medium">{result.name}</TableCell>
+                      <TableCell 
+                        className="font-medium text-primary cursor-pointer hover:underline"
+                        onClick={() => handleTestClick(result)}
+                      >
+                        {result.name}
+                      </TableCell>
                       <TableCell>{result.unit}</TableCell>
                       <TableCell>{result.expected.toFixed(1)}</TableCell>
                       <TableCell className={result.left ? getExpectedColor(result.left, result.expected) : ""}>
@@ -224,6 +240,15 @@ const TestingResults = () => {
         onSubmit={handleModalSubmit}
         isEditMode={isEditMode}
       />
+
+      {selectedTest && (
+        <VideoModal
+          isOpen={videoModalOpen}
+          onClose={() => setVideoModalOpen(false)}
+          videoUrl={selectedTest.videoUrl}
+          testName={selectedTest.name}
+        />
+      )}
     </div>
   );
 };

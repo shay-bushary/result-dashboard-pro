@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { LineChart as LineChartIcon } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart3 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
 
 interface TestResult {
   id: string;
@@ -19,59 +18,65 @@ interface TestResultsChartProps {
 }
 
 export const TestResultsChart = ({ results }: TestResultsChartProps) => {
-  const [showLeft, setShowLeft] = useState(true);
-  const [showRight, setShowRight] = useState(true);
-  const [showNoLaterality, setShowNoLaterality] = useState(true);
+  const [selectedTests, setSelectedTests] = useState<string[]>([]);
 
-  // Transform data for the chart
-  const chartData = results.map((result, index) => ({
-    name: result.name.substring(0, 20) + "...",
-    left: result.left,
-    right: result.right,
-    noLaterality: result.noLaterality,
-    expected: result.expected,
+  // Get unique test names for selection
+  const testOptions = results.map(result => ({
+    id: result.id,
+    name: result.name
   }));
+
+  // Filter and transform data based on selected tests
+  const chartData = results
+    .filter(result => selectedTests.length === 0 || selectedTests.includes(result.id))
+    .map((result) => ({
+      name: result.name.substring(0, 15) + "...",
+      [`${result.name} - Left`]: result.left,
+      [`${result.name} - Right`]: result.right,
+    }));
+
+  const handleTestToggle = (testId: string) => {
+    setSelectedTests(prev => {
+      if (prev.includes(testId)) {
+        return prev.filter(id => id !== testId);
+      }
+      if (prev.length < 2) {
+        return [...prev, testId];
+      }
+      return prev;
+    });
+  };
 
   return (
     <div className="border rounded-lg p-6 bg-card">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <LineChartIcon className="h-5 w-5 text-primary" />
+          <BarChart3 className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold text-foreground">Performance Chart</h3>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Checkbox 
-              id="left" 
-              checked={showLeft} 
-              onCheckedChange={(checked) => setShowLeft(checked === true)}
-            />
-            <Label htmlFor="left" className="cursor-pointer">Left</Label>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Checkbox 
-              id="right" 
-              checked={showRight} 
-              onCheckedChange={(checked) => setShowRight(checked === true)}
-            />
-            <Label htmlFor="right" className="cursor-pointer">Right</Label>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Checkbox 
-              id="noLaterality" 
-              checked={showNoLaterality} 
-              onCheckedChange={(checked) => setShowNoLaterality(checked === true)}
-            />
-            <Label htmlFor="noLaterality" className="cursor-pointer">No Laterality</Label>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">Select tests (max 2):</span>
+          <div className="flex gap-2">
+            {testOptions.map((test) => (
+              <button
+                key={test.id}
+                onClick={() => handleTestToggle(test.id)}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  selectedTests.includes(test.id)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-foreground hover:bg-secondary-hover'
+                }`}
+              >
+                {test.name.substring(0, 20)}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData}>
+        <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="name" 
@@ -91,45 +96,34 @@ export const TestResultsChart = ({ results }: TestResultsChartProps) => {
             }}
           />
           <Legend />
-          <Line 
-            type="monotone" 
-            dataKey="expected" 
-            stroke="hsl(var(--muted-foreground))" 
-            strokeDasharray="5 5"
-            name="Expected"
-            dot={false}
-          />
-          {showLeft && (
-            <Line 
-              type="monotone" 
-              dataKey="left" 
-              stroke="#3b82f6" 
-              strokeWidth={2}
-              name="Left"
-              connectNulls
-            />
-          )}
-          {showRight && (
-            <Line 
-              type="monotone" 
-              dataKey="right" 
-              stroke="#06b6d4" 
-              strokeWidth={2}
-              name="Right"
-              connectNulls
-            />
-          )}
-          {showNoLaterality && (
-            <Line 
-              type="monotone" 
-              dataKey="noLaterality" 
-              stroke="#6b7280" 
-              strokeWidth={2}
-              name="No Laterality"
-              connectNulls
-            />
-          )}
-        </LineChart>
+          <ReferenceLine y={100} stroke="hsl(var(--success))" strokeWidth={2} strokeDasharray="3 3" />
+          {selectedTests.map((testId, index) => {
+            const test = results.find(r => r.id === testId);
+            if (!test) return null;
+            
+            const colors = [
+              { left: '#3b82f6', right: '#93c5fd' },
+              { left: '#10b981', right: '#6ee7b7' }
+            ];
+            
+            return (
+              <>
+                <Bar 
+                  key={`${testId}-left`}
+                  dataKey={`${test.name} - Left`}
+                  fill={colors[index].left}
+                  name={`${test.name} - Left`}
+                />
+                <Bar 
+                  key={`${testId}-right`}
+                  dataKey={`${test.name} - Right`}
+                  fill={colors[index].right}
+                  name={`${test.name} - Right`}
+                />
+              </>
+            );
+          })}
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
