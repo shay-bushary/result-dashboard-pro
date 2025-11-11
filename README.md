@@ -2,6 +2,8 @@
 
 ## Project info
 
+**Live** - https://result-dashboard-pro.lovable.app
+
 **URL**: https://lovable.dev/projects/f2329b68-d2ee-4c02-8bcf-7040014a102e
 
 ## How can I edit this code?
