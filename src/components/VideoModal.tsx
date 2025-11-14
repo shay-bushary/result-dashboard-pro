@@ -10,7 +10,7 @@ interface VideoModalProps {
 export const VideoModal = ({ isOpen, onClose, videoUrl, testName }: VideoModalProps) => {
   // Extract video ID from YouTube URL
   const getYouTubeEmbedUrl = (url: string) => {
-    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+    const videoId = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/)?.[1];
     return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
   };
 
